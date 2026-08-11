@@ -166,7 +166,7 @@ body {
 .main {
   margin-left: 260px;
   padding: 40px 48px 80px;
-  max-width: 900px;
+  max-width: 860px;
 }
 .section { display: none; }
 .section.active { display: block; }
@@ -1396,41 +1396,53 @@ tr:hover td, .data-table tr:hover td { background: var(--hover); }
     overflow-x: hidden;
   }
 
-  /* Sidebar: full-screen overlay */
+  /* Sidebar: full-screen slide from left */
   .sidebar {
-    width: 80vw;
-    max-width: 320px;
+    width: 85vw;
+    max-width: 340px;
     height: 100vh;
+    height: 100dvh; /* dynamic viewport height for mobile */
     position: fixed;
-    left: -80vw;
+    left: 0;
     top: 0;
     z-index: 200;
-    transition: transform 0.3s ease;
+    transform: translateX(-100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
   }
   .sidebar.mobile-open {
-    transform: translateX(80vw);
+    transform: translateX(0);
   }
-  .sidebar.mobile-open + .mobile-overlay,
-  .mobile-overlay.show {
-    display: block;
+  .mobile-overlay {
+    display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
+    height: 100dvh;
     background: rgba(0,0,0,0.5);
     z-index: 199;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .mobile-overlay.show {
+    display: block;
+    opacity: 1;
   }
 
-  /* Main content: flex column */
+  /* Main content: full width on mobile */
   .main {
     margin-left: 0;
-    padding: 16px;
+    padding: 12px 14px;
     max-width: 100%;
     display: flex;
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
+    overflow-x: hidden;
   }
 
   /* Mobile menu button */
@@ -1465,6 +1477,13 @@ tr:hover td, .data-table tr:hover td { background: var(--hover); }
     max-width: 100%;
     margin: 8px 0;
     box-sizing: border-box;
+  }
+  /* Ensure consistent inner spacing */
+  .topic-card > *,
+  .vocab-topic-card > *,
+  .corpus-item > *,
+  .template-block > * {
+    max-width: 100%;
   }
 
   /* ===== Grids → Flex Columns ===== */
@@ -1749,8 +1768,6 @@ tr:hover td, .data-table tr:hover td { background: var(--hover); }
 <div class="mobile-overlay" onclick="toggleMobileSidebar()"></div>
 
 
-
-<body>
 
 <body>
 
@@ -9635,21 +9652,25 @@ tr:hover td, .data-table tr:hover td { background: var(--hover); }
 function toggleMobileSidebar() {
   var sidebar = document.querySelector('.sidebar');
   var overlay = document.querySelector('.mobile-overlay');
-  sidebar.classList.toggle('mobile-open');
-  overlay.classList.toggle('show');
-  document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+  var isOpen = sidebar.classList.toggle('mobile-open');
+  overlay.classList.toggle('show', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 
 // Auto-close sidebar when clicking nav item on mobile
 document.querySelectorAll('.nav-item').forEach(function(item) {
   item.addEventListener('click', function() {
     if (window.innerWidth <= 768) {
-      toggleMobileSidebar();
+      var sidebar = document.querySelector('.sidebar');
+      var overlay = document.querySelector('.mobile-overlay');
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('show');
+      document.body.style.overflow = '';
     }
   });
 });
 
-// Handle resize
+// Handle resize and orientation change
 document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('resize', function() {
     if (window.innerWidth > 768) {
@@ -9659,6 +9680,14 @@ document.addEventListener('DOMContentLoaded', function() {
       overlay.classList.remove('show');
       document.body.style.overflow = '';
     }
+  });
+  // Also handle orientation change on mobile
+  window.addEventListener('orientationchange', function() {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.querySelector('.mobile-overlay');
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
   });
 });
 
